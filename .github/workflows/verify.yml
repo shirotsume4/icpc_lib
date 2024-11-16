@@ -61,6 +61,18 @@ jobs:
         git commit -m "[skip actions] build PDF" || echo "No changes to commit"
         git push || echo "Nothing to push"
 
+    - name: Reset gh-pages branch
+      run: |
+        # Delete the remote gh-pages branch if it exists
+        git push origin --delete gh-pages || echo "gh-pages branch does not exist"
+        # Create a new gh-pages branch
+        git checkout --orphan gh-pages
+        git rm -rf .
+        echo "Initial commit for gh-pages branch" > index.html
+        git add index.html
+        git commit -m "Initial commit for gh-pages branch"
+        git push origin gh-pages
+
     - name: Deploy to gh-pages
       run: |
         DIR=$(mktemp -d)
@@ -68,17 +80,8 @@ jobs:
         cp build/*.css $DIR || exit 1
         cp build/*.html $DIR || exit 1
         git clean -dfx
-        if ! git show-ref --quiet refs/heads/gh-pages; then
-          git checkout --orphan gh-pages
-          echo "Initial commit for gh-pages branch" > index.html
-          git add index.html
-          git commit -m "Initial commit for gh-pages branch"
-          git push origin gh-pages
-        else
-          git switch gh-pages
-          git pull origin gh-pages --rebase || exit 1
-        fi
+        git switch gh-pages
         cp $DIR/* .
         git add .
         git commit -m "build PDF" || echo "No changes to commit"
-        git push --set-upstream origin gh-pages
+        git push
