@@ -1,32 +1,93 @@
-PHONY: build verify serve
+name: Verify library & Generate documentation
 
-build: notebook.pdf
+on:
+  push:
+    branches:
+      - main
+  pull_request:
 
-verify: .verify-helper/timestamps.local.json $(wildcard src/*/* test/* test/*/*)
-	clang-format -i test/*/*.cpp test/*.hpp
-	oj-verify run
+permissions:
+  contents: write
 
-URL = "http://127.0.0.1:4000"
+jobs:
+  verify:
+    runs-on: ubuntu-latest
 
-serve: build verify
-	cp notebook.pdf .verify-helper/docs/static/
-	cp build/notebook.html .verify-helper/docs/static/
-	cp build/*.css .verify-helper/docs/static/
-	oj-verify docs
-	cd .verify-helper/markdown; \
-	bundle install; \
-	( sleep 5.5; \
-	  ( command -v open && open $(URL) ) || \
-	  ( command -v start && start $(URL) ) || \
-	  xdg-open $(URL) ) & \
-	bundle exec jekyll serve --incremental
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-notebook.pdf: build/base.css build/notebook.css build/notebook.html
-	vivliostyle build build/notebook.html -o notebook.pdf
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        cache: 'pip'
 
-build/notebook.html: build/build.js $(wildcard src/*/* src/*/*/*) .clang-format
-	clang-format -i $(wildcard src/*/*.hpp src/*/*/*.hpp)
-	node build/build.js
+    - name: Install dependencies
+      run: |
+        pip install -U pip
+        pip install -r requirements.txt
 
-build/notebook.css: build/build.js
-	node build/build.js
+    - name: Switch to main branch
+      run: git switch main
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'latest'
+        cache: 'npm'
+
+    - name: Install Vivliostyle
+      run: npm install -g @vivliostyle/cli clang-format
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build PDF
+      run: make build
+
+    - name: Check build output
+      run: ls -la build
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
+
+    - name: Commit and push PDF
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        git add .
+        git commit -m "[skip actions] build PDF"
+        git push
+
+    - name: Ensure gh-pages branch exists
+      run: |
+        if ! git show-ref --quiet refs/heads/gh-pages; then
+          git checkout --orphan gh-pages
+          git rm -rf .
+          echo "Initial commit for gh-pages branch" > index.html
+          git add index.html
+          git commit -m "Initial commit for gh-pages branch"
+        else
+          git checkout gh-pages
+          git pull origin gh-pages --rebase
+        fi
+        git push origin gh-pages
+
+    - name: Copy to gh-pages
+      run: |
+        DIR=$(mktemp -d)
+        cp build/notebook.pdf $DIR
+        cp build/*.css $DIR
+        cp build/*.html $DIR
+        git clean -dfx
+        git switch gh-pages
+        cp $DIR/* .
+        git add .
+        git commit -m "build PDF"
+        git push
+        git switch main
