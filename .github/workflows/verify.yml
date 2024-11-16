@@ -44,8 +44,8 @@ jobs:
     - name: Build PDF
       run: make build
 
-    - name: Check build output
-      run: ls -la build
+    - name: Debug build directory
+      run: ls -la build || exit 1
 
     - name: Configure Git
       run: |
@@ -60,6 +60,7 @@ jobs:
         git add .
         git commit -m "[skip actions] build PDF" || echo "No changes to commit"
         git push || echo "Nothing to push"
+
     - name: Deploy to gh-pages
       run: |
         DIR=$(mktemp -d)
@@ -75,8 +76,9 @@ jobs:
           git push origin gh-pages
         else
           git switch gh-pages
+          git pull origin gh-pages --rebase || exit 1
         fi
         cp $DIR/* .
         git add .
         git commit -m "build PDF" || echo "No changes to commit"
-        git push -f
+        git push
