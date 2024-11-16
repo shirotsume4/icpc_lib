@@ -3,8 +3,11 @@ name: Verify library & Generate documentation
 on:
   push:
     branches:
-    - main
+      - main
   pull_request:
+
+permissions:
+  contents: write  # GITHUB_TOKEN にリポジトリ内容への書き込み権限を付与
 
 jobs:
   verify:
@@ -20,13 +23,14 @@ jobs:
       with:
         python-version: '3.x'
         cache: 'pip'
-    
+
     - name: Install dependencies
       run: |
         pip install -U pip
         pip install -r requirements.txt
 
-    - run: git switch main
+    - name: Switch to main branch
+      run: git switch main
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
