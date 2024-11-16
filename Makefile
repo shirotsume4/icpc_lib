@@ -22,7 +22,7 @@ serve: build verify
 	bundle exec jekyll serve --incremental
 
 notebook.pdf: build/base.css build/notebook.css build/notebook.html
-	vivliostyle build build/notebook.html -o notebook.pdf
+	vivliostyle build build/notebook.html -o build/notebook.pdf
 
 build/notebook.html: build/build.js $(wildcard src/*/* src/*/*/*) .clang-format
 	clang-format -i $(wildcard src/*/*.hpp src/*/*/*.hpp)
