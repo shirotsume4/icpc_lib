@@ -73,11 +73,10 @@ jobs:
           echo "Initial commit for gh-pages branch" > index.html
           git add index.html
           git commit -m "Initial commit for gh-pages branch"
-          git push origin gh-pages
         else
           git switch gh-pages
         fi
         cp $DIR/* .
         git add .
         git commit -m "build PDF" || echo "No changes to commit"
-        git push
+        git push --force
