@@ -60,7 +60,6 @@ jobs:
         git add .
         git commit -m "[skip actions] build PDF" || echo "No changes to commit"
         git push || echo "Nothing to push"
-
     - name: Deploy to gh-pages
       run: |
         DIR=$(mktemp -d)
@@ -80,4 +79,4 @@ jobs:
         cp $DIR/* .
         git add .
         git commit -m "build PDF" || echo "No changes to commit"
-        git push
+        git push -f
