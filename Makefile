@@ -29,9 +29,6 @@ jobs:
         pip install -U pip
         pip install -r requirements.txt
 
-    - name: Switch to main branch
-      run: git switch main
-
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
@@ -48,7 +45,7 @@ jobs:
       run: make build
 
     - name: Check build output
-      run: ls -la build
+      run: ls -la build || exit 1
 
     - name: Configure Git
       run: |
@@ -61,33 +58,27 @@ jobs:
       run: |
         git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git add .
-        git commit -m "[skip actions] build PDF"
-        git push
+        git commit -m "[skip actions] build PDF" || echo "No changes to commit"
+        git push || echo "Nothing to push"
 
-    - name: Ensure gh-pages branch exists
+    - name: Deploy to gh-pages
       run: |
+        DIR=$(mktemp -d)
+        cp build/notebook.pdf $DIR || exit 1
+        cp build/*.css $DIR || exit 1
+        cp build/*.html $DIR || exit 1
+        git clean -dfx
         if ! git show-ref --quiet refs/heads/gh-pages; then
           git checkout --orphan gh-pages
           git rm -rf .
           echo "Initial commit for gh-pages branch" > index.html
           git add index.html
           git commit -m "Initial commit for gh-pages branch"
+          git push origin gh-pages
         else
-          git checkout gh-pages
-          git pull origin gh-pages --rebase
+          git switch gh-pages
         fi
-        git push origin gh-pages
-
-    - name: Copy to gh-pages
-      run: |
-        DIR=$(mktemp -d)
-        cp build/notebook.pdf $DIR
-        cp build/*.css $DIR
-        cp build/*.html $DIR
-        git clean -dfx
-        git switch gh-pages
         cp $DIR/* .
         git add .
-        git commit -m "build PDF"
+        git commit -m "build PDF" || echo "No changes to commit"
         git push
-        git switch main
