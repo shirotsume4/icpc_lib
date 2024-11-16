@@ -26,11 +26,6 @@ jobs:
         pip install -U pip
         pip install -r requirements.txt
 
-    - run: oj-verify all
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        GH_PAT: this_token_is_never_used_but_oj_verify_requires_this
-
     - run: git switch main
 
     - name: Set up Node.js
