@@ -69,7 +69,7 @@ jobs:
           echo "Initial commit for gh-pages branch" > index.html
           git add index.html
           git commit -m "Initial commit for gh-pages branch"
-          git push origin gh-pages
+          git push -f origin gh-pages  # 強制的にプッシュ
         fi
 
     - name: Copy to gh-pages
