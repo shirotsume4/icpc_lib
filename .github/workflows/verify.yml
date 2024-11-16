@@ -75,7 +75,7 @@ jobs:
     - name: Copy to gh-pages
       run: |
         DIR=$(mktemp -d)
-        cp notebook.pdf $DIR
+        cp build/notebook.pdf $DIR
         cp build/*.css $DIR
         cp build/*.html $DIR
         git clean -dfx
