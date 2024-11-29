@@ -37,6 +37,7 @@
     <li><a href="#FastSet.hpp">FastSet.hpp</a></li>
     <li><a href="#dsu.hpp">dsu.hpp</a></li>
     <li><a href="#dsu_potential.hpp">dsu_potential.hpp</a></li>
+    <li><a href="#segtree.hpp">segtree.hpp</a></li>
     </ol>
     <li><a class="section" href="#math">math</a></li>
     <ol>
@@ -371,6 +372,72 @@ setxkbmap <span class="token parameter variable">-option</span> ctrl:nocaps
    <span class="token punctuation">}</span>
    <span class="token comment">/*idのpotentialを求める*/</span>
    type <span class="token function">get_p</span><span class="token punctuation">(</span>ll id<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token function">root</span><span class="token punctuation">(</span>id<span class="token punctuation">)</span><span class="token punctuation">.</span>second<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
+</div>
+
+    <div class="filename">
+        <h2 id="segtree.hpp">segtree.hpp</h2>
+        md5: 97337e
+
+    </div>
+    <div class="content content-hpp">
+    <pre><code><span class="token keyword">using</span> <span class="token keyword">namespace</span> std<span class="token punctuation">;</span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name function">rep</span><span class="token expression"><span class="token punctuation">(</span>i<span class="token punctuation">,</span> N<span class="token punctuation">)</span> <span class="token keyword">for</span><span class="token punctuation">(</span>i <span class="token operator">=</span> <span class="token number">0</span><span class="token punctuation">;</span> i <span class="token operator">&lt;</span> N<span class="token punctuation">;</span> i<span class="token operator">++</span><span class="token punctuation">)</span></span></span>
+<span class="token macro property"><span class="token directive-hash">#</span><span class="token directive keyword">define</span> <span class="token macro-name">ll</span> <span class="token expression"><span class="token keyword">long</span> <span class="token keyword">long</span></span></span>
+
+<span class="token comment">/*type:セグ木で使う型*/</span>
+<span class="token keyword">using</span> type <span class="token operator">=</span> ll<span class="token punctuation">;</span>
+<span class="token comment">/*op:セグ木に載せたい演算*/</span>
+type <span class="token function">op</span><span class="token punctuation">(</span>type a<span class="token punctuation">,</span> type b<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> <span class="token function">min</span><span class="token punctuation">(</span>a<span class="token punctuation">,</span> b<span class="token punctuation">)</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+<span class="token comment">/*e:opを用いてもデータを変化させない値*/</span>
+type <span class="token function">e</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> INT64_MAX<span class="token punctuation">;</span> <span class="token punctuation">}</span>
+
+<span class="token keyword">class</span> <span class="token class-name">segtree</span> <span class="token punctuation">{</span>
+   <span class="token keyword">private</span><span class="token operator">:</span>
+   ll N<span class="token punctuation">;</span>
+   vector<span class="token operator">&lt;</span>type<span class="token operator">></span> tree<span class="token punctuation">;</span>
+
+   <span class="token keyword">public</span><span class="token operator">:</span>
+   <span class="token comment">/*0-indexed,1-indexed両対応*/</span>
+   <span class="token function">segtree</span><span class="token punctuation">(</span>ll tree_size<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      N <span class="token operator">=</span> tree_size<span class="token punctuation">;</span>
+      tree<span class="token punctuation">.</span><span class="token function">resize</span><span class="token punctuation">(</span><span class="token number">2</span> <span class="token operator">*</span> <span class="token punctuation">(</span>N <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">)</span><span class="token punctuation">,</span> <span class="token function">e</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   <span class="token comment">/*全体にopを適用する*/</span>
+   type <span class="token function">all_prod</span><span class="token punctuation">(</span><span class="token keyword">void</span><span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> tree<span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
+   <span class="token comment">/*[l,r)の区間演算*/</span>
+   type <span class="token function">prod</span><span class="token punctuation">(</span>ll l<span class="token punctuation">,</span> ll r<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      l <span class="token operator">+=</span> N<span class="token punctuation">;</span>
+      r <span class="token operator">+=</span> N<span class="token punctuation">;</span>
+      type res<span class="token punctuation">;</span>
+      type left <span class="token operator">=</span> <span class="token function">e</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      type right <span class="token operator">=</span> <span class="token function">e</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">while</span><span class="token punctuation">(</span>l <span class="token operator">&lt;</span> r<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         <span class="token keyword">if</span><span class="token punctuation">(</span>l <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            left <span class="token operator">=</span> <span class="token function">op</span><span class="token punctuation">(</span>left<span class="token punctuation">,</span> tree<span class="token punctuation">[</span>l<span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+            l<span class="token operator">++</span><span class="token punctuation">;</span>
+         <span class="token punctuation">}</span>
+         <span class="token keyword">if</span><span class="token punctuation">(</span>r <span class="token operator">%</span> <span class="token number">2</span> <span class="token operator">==</span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+            r<span class="token operator">--</span><span class="token punctuation">;</span>
+            right <span class="token operator">=</span> <span class="token function">op</span><span class="token punctuation">(</span>tree<span class="token punctuation">[</span>r<span class="token punctuation">]</span><span class="token punctuation">,</span> right<span class="token punctuation">)</span><span class="token punctuation">;</span>
+         <span class="token punctuation">}</span>
+         l <span class="token operator">/=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+         r <span class="token operator">/=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+      res <span class="token operator">=</span> <span class="token function">op</span><span class="token punctuation">(</span>left<span class="token punctuation">,</span> right<span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token keyword">return</span> res<span class="token punctuation">;</span>
+   <span class="token punctuation">}</span>
+   <span class="token comment">/*idに値valを代入する*/</span>
+   <span class="token keyword">void</span> <span class="token function">set</span><span class="token punctuation">(</span>ll id<span class="token punctuation">,</span> type val<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+      id <span class="token operator">+=</span> N<span class="token punctuation">;</span>
+      tree<span class="token punctuation">[</span>id<span class="token punctuation">]</span> <span class="token operator">=</span> val<span class="token punctuation">;</span>
+      <span class="token keyword">while</span><span class="token punctuation">(</span>id <span class="token operator">></span> <span class="token number">1</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+         id <span class="token operator">/=</span> <span class="token number">2</span><span class="token punctuation">;</span>
+         tree<span class="token punctuation">[</span>id<span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token function">op</span><span class="token punctuation">(</span>tree<span class="token punctuation">[</span><span class="token number">2</span> <span class="token operator">*</span> id<span class="token punctuation">]</span><span class="token punctuation">,</span> tree<span class="token punctuation">[</span><span class="token number">2</span> <span class="token operator">*</span> id <span class="token operator">+</span> <span class="token number">1</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+      <span class="token punctuation">}</span>
+   <span class="token punctuation">}</span>
+   <span class="token comment">/*idの値を取得する*/</span>
+   type <span class="token function">get</span><span class="token punctuation">(</span>ll id<span class="token punctuation">)</span> <span class="token punctuation">{</span> <span class="token keyword">return</span> tree<span class="token punctuation">[</span>N <span class="token operator">+</span> id<span class="token punctuation">]</span><span class="token punctuation">;</span> <span class="token punctuation">}</span>
 <span class="token punctuation">}</span><span class="token punctuation">;</span></code></pre>
 </div>
 
