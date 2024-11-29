@@ -1,5 +1,3 @@
-#include <bits/stdc++.h>
-using namespace std;
 #define rep(i, N) for(i = 0; i < N; i++)
 #define ll long long
 
