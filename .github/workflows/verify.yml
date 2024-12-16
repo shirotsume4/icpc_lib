@@ -1,0 +1,82 @@
+name: Verify library & Generate documentation
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        pip install -U pip
+        pip install -r requirements.txt
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 'latest'
+        cache: 'npm'
+
+    - name: Install Vivliostyle
+      run: npm install -g @vivliostyle/cli clang-format
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build PDF
+      run: make build
+
+    - name: Debug build directory
+      run: ls -la build || exit 1  # デバッグステップを追加
+
+    - name: Configure Git
+      run: |
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        git config --global user.name "GitHub Actions Bot"
+        git config --global push.autoSetupRemote true
+    - name: Commit and push PDF to main
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
+        git add .
+        git commit -m "[skip actions] build PDF" || echo "No changes to commit"
+        git push || echo "Nothing to push"
+
+    - name: Deploy to gh-pages
+      run: |
+        DIR=$(mktemp -d)
+        cp build/notebook.pdf $DIR || exit 1
+        cp build/*.css $DIR || exit 1
+        cp build/*.html $DIR || exit 1
+        git clean -dfx
+        if ! git show-ref --quiet refs/heads/gh-pages; then
+          git checkout --orphan gh-pages
+          echo "Initial commit for gh-pages branch" > index.html
+          git add index.html
+          git commit -m "Initial commit for gh-pages branch"
+        else
+          git switch gh-pages
+        fi
+        cp $DIR/* .
+        git add .
+        git commit -m "build PDF" || echo "No changes to commit"
+        git push --force
